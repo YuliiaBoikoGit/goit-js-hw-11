@@ -18,14 +18,21 @@ window.addEventListener('scroll', onLoadMoreImages);
 window.addEventListener('scroll', onScrollToTop);
 
 
-function onSearch(event) {
+async function onSearch(event) {
     event.preventDefault();
 
     clearImageList();
 
     fetchImagesApiService.name = event.currentTarget.elements.searchQuery.value;
     fetchImagesApiService.resetPage();
-    fetchImagesApiService.fetchImages().then(renderImageList).then(smoothScroll);
+
+    try {
+        const images = await fetchImagesApiService.fetchImages();
+        renderImageList(images);
+        smoothScroll(images);
+    } catch (error) {
+        Notiflix.Notify.failure('Something went wrong');
+    }
 
     refs.searchForm.reset();
     onEmptyInput();
@@ -104,9 +111,10 @@ function onSearchError(error) {
     Notiflix.Notify.failure('Sorry, there are no images matching your search query. Please try again.');
 };
 
-function onLoadMoreImages(event) {
+async function onLoadMoreImages(event) {
     if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight) {
-        fetchImagesApiService.fetchImages().then(renderImageList);
+        const images = await fetchImagesApiService.fetchImages();
+        renderImageList(images);
     };
 };
 
