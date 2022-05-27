@@ -31,12 +31,12 @@ async function onSearch(event) {
         renderImageList(images);
         smoothScroll(images);
     } catch (error) {
-        Notiflix.Notify.failure('Something went wrong');
+        Notiflix.Notify.failure(error.message);
     }
 
     refs.searchForm.reset();
     onEmptyInput();
-
+    onReachedTheEndOfSearch.done = false;
 };
 
 function renderImageList(images) {
@@ -46,8 +46,7 @@ function renderImageList(images) {
     };
 
     if (images.hits.length === 0) {
-        Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
-        return;
+        onReachedTheEndOfSearch();
     };
 
     refs.imageCardList.insertAdjacentHTML('beforeend', makeImageCardListMarkup(images));
@@ -113,8 +112,12 @@ function onSearchError(error) {
 
 async function onLoadMoreImages(event) {
     if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight) {
-        const images = await fetchImagesApiService.fetchImages();
-        renderImageList(images);
+        try {
+            const images = await fetchImagesApiService.fetchImages();
+            renderImageList(images);
+        } catch (error) {
+            Notiflix.Notify.failure(error.message);
+        };
     };
 };
 
@@ -142,8 +145,14 @@ function onInputChange() {
 };
 
 function onEmptyInput() {
-    if (refs.searchInput.value === '') {
+    if (refs.searchInput.value.trim() === '') {
         refs.searchBtn.disabled = true;
         refs.searchBtn.classList.remove('active');
     };
+};
+
+function onReachedTheEndOfSearch() {
+    if (onReachedTheEndOfSearch.done) return;
+    Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
+    onReachedTheEndOfSearch.done = true;
 };
