@@ -20,8 +20,8 @@ export default class FetchImagesApiService {
 
         return axios.get(`${BASE_URL}?key=${API_KEY}&q=${this.imageName}&${searchParams}`)
             .then(response => {
-                if (this.page === 1 && response.data.total > 0) {
-                    Notiflix.Notify.success(`Hooray! We found ${response.data.total} images.`);
+                if (this.page === 1 && response.data.totalHits > 0) {
+                    Notiflix.Notify.success(`Hooray! We found ${response.data.totalHits} images.`);
                 };
 
                 this.incrementPage();
