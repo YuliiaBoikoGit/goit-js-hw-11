@@ -5,5 +5,6 @@ export default function getRefs() {
         searchBtn: document.querySelector('button'),
         imageCardList: document.querySelector('.gallery'),
         topScrollBtn: document.querySelector('#scrollToTopBtn'),
+        loader: document.querySelector('#loader'),
     };
 }

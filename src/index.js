@@ -8,13 +8,18 @@ import "simplelightbox/dist/simple-lightbox.min.css";
 
 const refs = getRefs();
 const fetchImagesApiService = new FetchImagesApiService();
+const options = {
+    root: null,
+    rootMargin: "0px",
+    threshold: 0.25
+};
+const observer = new IntersectionObserver(onIntersect, options);
 
 refs.searchForm.addEventListener('submit', onSearch);
 refs.searchInput.addEventListener('input', onInputChange);
 refs.searchInput.addEventListener('input', onEmptyInput);
 refs.imageCardList.addEventListener('click', onGalleryItemClick);
 refs.topScrollBtn.addEventListener('click', onScrollBtnClick);
-window.addEventListener('scroll', onLoadMoreImages);
 window.addEventListener('scroll', onScrollToTop);
 
 async function onSearch(event) {
@@ -25,11 +30,10 @@ async function onSearch(event) {
     fetchImagesApiService.name = event.currentTarget.elements.searchQuery.value;
     fetchImagesApiService.resetPage();
 
-    window.addEventListener('scroll', onLoadMoreImages);
-
     try {
         const images = await fetchImagesApiService.fetchImages();
         renderImageList(images);
+        observer.observe(loader);
         smoothScroll(images);
     } catch (error) {
         Notiflix.Notify.failure(error.message);
@@ -42,6 +46,12 @@ async function onSearch(event) {
 function renderImageList(images) {
     if (images.total === 0) {
         onSearchError();
+        return;
+    };
+
+    if (images.hits.length === 0) {
+        Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
+        observer.disconnect();
         return;
     };
 
@@ -106,23 +116,6 @@ function onSearchError(error) {
     Notiflix.Notify.failure('Sorry, there are no images matching your search query. Please try again.');
 };
 
-async function onLoadMoreImages(event) {
-    if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight) {
-        try {
-            const images = await fetchImagesApiService.fetchImages();
-            renderImageList(images);
-
-            if (images.hits.length === 0) {
-                Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
-                window.removeEventListener('scroll', onLoadMoreImages);
-                return;
-            };
-        } catch (error) {
-            Notiflix.Notify.failure(error.message);
-        };
-    };
-};
-
 function clearImageList() {
     refs.imageCardList.innerHTML = '';
 };
@@ -151,4 +144,12 @@ function onEmptyInput() {
         refs.searchBtn.disabled = true;
         refs.searchBtn.classList.remove('active');
     };
+};
+
+function onIntersect(entries, observer) {
+    entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+            fetchImagesApiService.fetchImages().then(renderImageList);
+        };
+    });
 };
